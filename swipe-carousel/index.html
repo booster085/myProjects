@@ -1,0 +1,89 @@
+<div class="carousel">
+        <div class="item-block">
+            <div class="img1"><p>text1</p></div>
+        </div>
+        <div class="item-block">
+            <div class="img2"><p>text2</p></div>
+        </div>
+        <div class="item-block">
+            <div class="img3"><p>text3</p></div>
+        </div>
+</div>
+<div class="dots-wrapper">
+    <span class="dot active" data-num="1"></span>
+    <span class="dot" data-num="2"></span>
+    <span class="dot" data-num="3"></span>
+</div>
+<script>
+    const carousel = {
+        element: null,
+        currentPos: 0,
+        slidesCnt: 0,
+        touchCoords: [],
+        interval: 0,
+        start: null,
+        run: (element, interval = 10000, swipe = false) => {
+            carousel.element = $(element)
+            carousel.interval = interval
+            carousel.slidesCnt = carousel.element.find('.item-block').length
+            $('.dots-wrapper .dot').click(function() {
+                if (!$(this).hasClass('active')) {
+                    carousel.currentPos = $(this).data('num')
+                    carousel.move()
+                }
+            })
+            carousel.loop()
+            if (swipe) {
+                carousel.swipe()
+            }
+        },
+        loop: () => {
+            carousel.start = setInterval(() => {
+                if(carousel.currentPos + 1 >= carousel.slidesCnt) {
+                    carousel.currentPos = 0
+                } else {
+                    carousel.currentPos++
+                }
+                carousel.move()
+            }, carousel.interval)
+        },
+        move: () => {
+            carousel.element.animate({left: (-(carousel.currentPos) * carousel.element.find('.item-block').outerWidth()) + 'px'})
+            carousel.changeDot()
+        },
+        changeDot: () => {
+            $('.dots-wrapper .dot').eq(carousel.currentPos).addClass('active').siblings().removeClass('active');
+        },
+        swipe: () => {
+            carousel.element.on('touchstart', function(e) {
+                carousel.touchCoords.x = e.originalEvent.touches[0].clientX
+                carousel.touchCoords.oldX = carousel.touchCoords.x
+                clearInterval(carousel.start)
+            })
+            carousel.element.on('touchmove', function(e) {
+                let pixelsToMove = carousel.touchCoords.oldX - e.originalEvent.touches[0].clientX
+                carousel.element.css('left', (parseInt(carousel.element.css('left'), 10) - pixelsToMove))
+                carousel.touchCoords.oldX = e.originalEvent.touches[0].clientX
+            })
+            carousel.element.on('touchend', function(e) {
+                if (e.originalEvent.changedTouches[0].clientX > carousel.touchCoords.x) {  //swipe right
+                    if(carousel.currentPos > 0) {
+                        carousel.currentPos--
+                    }
+                } else if (e.originalEvent.changedTouches[0].clientX < carousel.touchCoords.x) {   //swipe left
+                    if(carousel.currentPos + 1 < carousel.slidesCnt) {
+                        carousel.currentPos++
+                    }
+                }
+                carousel.touchCoords.x = e.originalEvent.changedTouches[0].clientX
+                carousel.move()
+                carousel.loop()
+
+            })
+            
+        }
+
+    }
+    //Element, interval, swipe
+    carousel.run('.carousel', 30000, true);
+</script>
